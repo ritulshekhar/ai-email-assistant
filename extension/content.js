@@ -1,35 +1,30 @@
 function getSelectedText() {
-  const activeEl = document.activeElement;
-
-  // Case 1: Gmail compose box (contenteditable)
-  if (activeEl && activeEl.isContentEditable) {
-    return window.getSelection().toString();
+  const selection = window.getSelection();
+  if (selection && selection.toString().trim()) {
+    return selection.toString();
   }
 
-  // Case 2: Try normal selection
-  const selection = window.getSelection();
-  if (selection && selection.toString()) {
+  const activeEl = document.activeElement;
+  if (activeEl && activeEl.isContentEditable) {
     return selection.toString();
   }
 
   return "";
 }
 
-window.addEventListener("message", (event) => {
-  if (event.data.type !== "REWRITE_EMAIL") return;
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type !== "REWRITE_EMAIL") return;
 
-  const tone = event.data.tone;
-  const selectedText = getSelectedText();
+  const text = getSelectedText();
 
-  console.log("Tone:", tone);
-  console.log("Selected text:", selectedText);
+  console.log("Captured text:", text);
 
-  if (!selectedText) {
-    alert("No text detected. Please select text inside the email or compose box.");
+  if (!text) {
+    alert("No text detected. Select text inside the compose box.");
     return;
   }
 
   alert(
-    `Captured successfully!\n\nTone: ${tone}\n\nText:\n${selectedText}`
+    `Captured successfully\n\nTone: ${request.tone}\n\nText:\n${text}`
   );
 });

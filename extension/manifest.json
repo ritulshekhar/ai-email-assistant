@@ -1,17 +1,21 @@
 {
   "manifest_version": 3,
   "name": "AI Email Assistant",
-  "description": "Rewrite emails in different tones directly inside Gmail",
-  "version": "0.1",
+  "version": "1.0",
+  "description": "Rewrite emails in different tones inside Gmail",
+
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["https://mail.google.com/*"],
+
   "action": {
     "default_popup": "popup.html"
   },
+
   "content_scripts": [
     {
       "matches": ["https://mail.google.com/*"],
-      "js": ["content.js"]
+      "js": ["content.js"],
+      "all_frames": true
     }
   ]
 }
