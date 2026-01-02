@@ -1,8 +1,18 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import ollama
 
 app = FastAPI()
+
+# 🔹 CORS FIX (CRITICAL)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow chrome-extension://
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class RewriteRequest(BaseModel):
