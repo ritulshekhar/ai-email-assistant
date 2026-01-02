@@ -1,24 +1,3 @@
-
-async function rewriteWithAI(text, tone) {
-  const response = await fetch("http://127.0.0.1:8000/rewrite", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      text: text,
-      tone: tone
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error("Backend request failed");
-  }
-
-  const data = await response.json();
-  return data.rewritten_text;
-}
-
 function replaceSelectedText(newText) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
@@ -28,7 +7,7 @@ function replaceSelectedText(newText) {
   range.insertNode(document.createTextNode(newText));
 }
 
-chrome.runtime.onMessage.addListener(async (request) => {
+chrome.runtime.onMessage.addListener((request) => {
   if (request.type !== "REWRITE_EMAIL") return;
 
   const selection = window.getSelection();
@@ -39,14 +18,18 @@ chrome.runtime.onMessage.addListener(async (request) => {
     return;
   }
 
-  try {
-    const rewrittenText = await rewriteWithAI(
-      selectedText,
-      request.tone
-    );
-    replaceSelectedText(rewrittenText);
-  } catch (error) {
-    console.error("AI rewrite failed:", error);
-    alert("AI rewrite failed. Make sure backend is running.");
-  }
+  chrome.runtime.sendMessage(
+    {
+      type: "REWRITE_EMAIL",
+      text: selectedText,
+      tone: request.tone
+    },
+    (response) => {
+      if (!response || !response.success) {
+        alert("AI rewrite failed. Backend not reachable.");
+        return;
+      }
+      replaceSelectedText(response.rewritten);
+    }
+  );
 });
