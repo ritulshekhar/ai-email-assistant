@@ -40,7 +40,7 @@ function getEmailBody() {
 // -------- Message handling --------
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
-  // 🔹 Rewrite email
+  // Rewrite email
   if (request.type === "REWRITE_EMAIL") {
     const text = getSelectedText();
 
@@ -57,24 +57,47 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
   }
 
-  // 🔹 Classify email
+  // Classify email
   if (request.type === "CLASSIFY_EMAIL") {
-    const text = getEmailBody();
+  const text = getEmailBody();
 
-    if (!text || text.trim().length < 20) {
-      alert("Could not read email body. Open the email fully.");
+  if (!text || text.trim().length < 20) {
+    alert("Could not read email body.");
+    return;
+  }
+
+  chrome.runtime.sendMessage({
+    type: "CLASSIFY_BACKEND",
+    text: text
+  }, (response) => {
+    if (!response?.success) {
+      alert("Email classification failed");
       return;
     }
 
-    chrome.runtime.sendMessage({
-      type: "CLASSIFY_BACKEND",
-      text: text
-    }, (response) => {
-      if (response?.success) {
-        alert("Email category: " + response.category);
-      } else {
-        alert("Email classification failed");
-      }
-    });
-  }
-});
+    // Remove existing badge if any
+    const oldBadge = document.getElementById("ai-email-category-badge");
+    if (oldBadge) oldBadge.remove();
+
+    // Create badge
+    const badge = document.createElement("div");
+    badge.id = "ai-email-category-badge";
+    badge.innerText = "Category: " + response.category;
+
+    badge.style.padding = "6px 10px";
+    badge.style.margin = "10px 0";
+    badge.style.display = "inline-block";
+    badge.style.background = "#e0f2fe";
+    badge.style.color = "#0369a1";
+    badge.style.borderRadius = "6px";
+    badge.style.fontWeight = "bold";
+    badge.style.fontSize = "13px";
+
+    // Insert badge at top of email
+    const container = document.querySelector("div[role='main']");
+    if (container) {
+      container.prepend(badge);
+    }
+  });
+}
+
