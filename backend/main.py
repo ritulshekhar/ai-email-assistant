@@ -1,8 +1,18 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 
 app = FastAPI()
+
+# ✅ ALLOW CHROME EXTENSION & LOCALHOST
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # safe for local tool
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class RewriteRequest(BaseModel):
     text: str
@@ -20,7 +30,7 @@ Email:
 """
 
     response = requests.post(
-        "http://localhost:11434/api/generate",
+        "http://127.0.0.1:11434/api/generate",
         json={
             "model": "mistral",
             "prompt": prompt,
