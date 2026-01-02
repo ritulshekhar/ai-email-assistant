@@ -1,9 +1,19 @@
+
 async function rewriteWithAI(text, tone) {
-  const response = await fetch("http://localhost:8000/rewrite", {
+  const response = await fetch("http://127.0.0.1:8000/rewrite", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, tone })
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      text: text,
+      tone: tone
+    })
   });
+
+  if (!response.ok) {
+    throw new Error("Backend request failed");
+  }
 
   const data = await response.json();
   return data.rewritten_text;
@@ -11,7 +21,7 @@ async function rewriteWithAI(text, tone) {
 
 function replaceSelectedText(newText) {
   const selection = window.getSelection();
-  if (!selection.rangeCount) return;
+  if (!selection || selection.rangeCount === 0) return;
 
   const range = selection.getRangeAt(0);
   range.deleteContents();
@@ -22,18 +32,21 @@ chrome.runtime.onMessage.addListener(async (request) => {
   if (request.type !== "REWRITE_EMAIL") return;
 
   const selection = window.getSelection();
-  const text = selection.toString();
+  const selectedText = selection.toString();
 
-  if (!text) {
+  if (!selectedText) {
     alert("Please select text inside the Gmail compose box.");
     return;
   }
 
   try {
-    const rewritten = await rewriteWithAI(text, request.tone);
-    replaceSelectedText(rewritten);
-  } catch (err) {
+    const rewrittenText = await rewriteWithAI(
+      selectedText,
+      request.tone
+    );
+    replaceSelectedText(rewrittenText);
+  } catch (error) {
+    console.error("AI rewrite failed:", error);
     alert("AI rewrite failed. Make sure backend is running.");
-    console.error(err);
   }
 });
