@@ -1,30 +1,29 @@
-console.log("POPUP JS LOADED");
-
-// Rewrite buttons
-document.querySelectorAll("button[data-tone]").forEach((btn) => {
+document.querySelectorAll("button").forEach(btn => {
   btn.addEventListener("click", async () => {
-    const tone = btn.dataset.tone;
 
     const [tab] = await chrome.tabs.query({
       active: true,
       currentWindow: true
     });
 
-    chrome.tabs.sendMessage(tab.id, {
-      type: "REWRITE_EMAIL",
-      tone: tone
-    });
-  });
-});
+    if (btn.dataset.tone) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: "REWRITE_EMAIL",
+        tone: btn.dataset.tone
+      });
+    }
 
-// Classify button
-document.getElementById("classify").addEventListener("click", async () => {
-  const [tab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  });
+    if (btn.dataset.action === "extract") {
+      chrome.tabs.sendMessage(tab.id, {
+        type: "EXTRACT_EMAIL"
+      });
+    }
 
-  chrome.tabs.sendMessage(tab.id, {
-    type: "CLASSIFY_EMAIL"
+    if (btn.dataset.action === "classify") {
+      chrome.tabs.sendMessage(tab.id, {
+        type: "CLASSIFY_EMAIL"
+      });
+    }
+
   });
 });
