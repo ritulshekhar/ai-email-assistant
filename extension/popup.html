@@ -1,28 +1,58 @@
-console.log("POPUP LOADED");
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI Email Assistant</title>
 
-document.querySelectorAll("button").forEach((btn) => {
-  btn.addEventListener("click", async () => {
-    const tone = btn.dataset.tone;
-
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true
-    });
-
-    if (!tab || !tab.id) {
-      alert("No active tab found.");
-      return;
-    }
-
-    chrome.tabs.sendMessage(
-      tab.id,
-      { type: "CLASSIFY_EMAIL" },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          console.warn("No content script yet.");
-          alert("Please refresh Gmail and try again.");
-        }
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        width: 220px;
+        padding: 12px;
+        background-color: #111827;
+        color: #f9fafb;
       }
-    );
-  });
-});
+
+      h3 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+        text-align: center;
+      }
+
+      button {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 8px;
+        border: none;
+        border-radius: 6px;
+        background-color: #2563eb;
+        color: white;
+        font-size: 13px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #1d4ed8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h3>Email Tools</h3>
+
+    <!-- Rewrite tones -->
+    <button data-tone="formal">Rewrite: Formal</button>
+    <button data-tone="polite">Rewrite: Polite</button>
+    <button data-tone="confident">Rewrite: Confident</button>
+    <button data-tone="short">Rewrite: Short & Crisp</button>
+    <button data-tone="informal">Rewrite: Informal</button>
+
+    <hr style="margin: 10px 0; border-color: #374151;" />
+
+    <!-- Classification / extraction -->
+    <button id="classify">Classify Email</button>
+    <button id="extract">Extract Event</button>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
