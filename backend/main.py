@@ -20,26 +20,19 @@ class RewriteRequest(BaseModel):
 
 @app.post("/rewrite")
 def rewrite_email(req: RewriteRequest):
-    prompt = f"""
-Rewrite the following email in a {req.tone} tone.
-Make it clear, natural, and professional.
-Do not add new information.
+    try:
+        prompt = f"Rewrite this email in a {req.tone} tone:\n\n{req.text}"
 
-Email:
-{req.text}
-"""
+        response = ollama.generate(
+            model="mistral:latest",
+            prompt=prompt
+        )
 
-    response = requests.post(
-        "http://127.0.0.1:11434/api/generate",
-        json={
-            "model": "mistral",
-            "prompt": prompt,
-            "stream": False
-        },
-        timeout=120
-    )
+        return {
+            "rewritten_text": response["response"]
+        }
 
-    output = response.json()
-    rewritten = output.get("response", req.text)
-
-    return {"rewritten_text": rewritten}
+    except Exception as e:
+        return {
+            "rewritten_text": f"(Error from backend: {str(e)})"
+        }
