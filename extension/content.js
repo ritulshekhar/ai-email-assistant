@@ -1,35 +1,80 @@
+console.log("CONTENT SCRIPT LOADED");
+
+// -------- Rewrite helpers --------
+function getSelectedText() {
+  const selection = window.getSelection();
+  return selection ? selection.toString() : "";
+}
+
 function replaceSelectedText(newText) {
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
+  if (!selection.rangeCount) return;
 
   const range = selection.getRangeAt(0);
   range.deleteContents();
   range.insertNode(document.createTextNode(newText));
 }
 
-chrome.runtime.onMessage.addListener((request) => {
-  if (request.type !== "REWRITE_EMAIL") return;
+// -------- Gmail email body extraction (robust) --------
+function getEmailBody() {
+  // Primary Gmail email body
+  const bodies = document.querySelectorAll("div[role='listitem']");
 
-  const selection = window.getSelection();
-  const selectedText = selection.toString();
+  let text = "";
+  bodies.forEach(el => {
+    if (el.innerText.length > text.length) {
+      text = el.innerText;
+    }
+  });
 
-  if (!selectedText) {
-    alert("Please select text inside the Gmail compose box.");
-    return;
+  // Fallback for other Gmail layouts
+  if (!text) {
+    const alt = document.querySelector("div.a3s");
+    if (alt) text = alt.innerText;
   }
 
-  chrome.runtime.sendMessage(
-    {
-      type: "REWRITE_EMAIL",
-      text: selectedText,
+  console.log("Extracted email body:", text);
+  return text;
+}
+
+// -------- Message handling --------
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
+  // 🔹 Rewrite email
+  if (request.type === "REWRITE_EMAIL") {
+    const text = getSelectedText();
+
+    chrome.runtime.sendMessage({
+      type: "REWRITE_BACKEND",
+      text: text,
       tone: request.tone
-    },
-    (response) => {
-      if (!response || !response.success) {
-        alert("AI rewrite failed. Backend not reachable.");
-        return;
+    }, (response) => {
+      if (response?.success) {
+        replaceSelectedText(response.rewritten);
+      } else {
+        alert("AI rewrite failed");
       }
-      replaceSelectedText(response.rewritten);
+    });
+  }
+
+  // 🔹 Classify email
+  if (request.type === "CLASSIFY_EMAIL") {
+    const text = getEmailBody();
+
+    if (!text || text.trim().length < 20) {
+      alert("Could not read email body. Open the email fully.");
+      return;
     }
-  );
+
+    chrome.runtime.sendMessage({
+      type: "CLASSIFY_BACKEND",
+      text: text
+    }, (response) => {
+      if (response?.success) {
+        alert("Email category: " + response.category);
+      } else {
+        alert("Email classification failed");
+      }
+    });
+  }
 });
