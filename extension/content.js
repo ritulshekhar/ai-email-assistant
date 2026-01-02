@@ -1,118 +1,75 @@
-console.log("CONTENT SCRIPT LOADED");
+console.log("Content script loaded");
 
-// Helper functions
+// Utility: resolve relative date
+function resolveDate(dateText) {
+  if (!dateText || dateText === "none") return null;
 
-function getSelectedText() {
-  const selection = window.getSelection();
-  return selection ? selection.toString() : "";
-}
+  const today = new Date();
+  const lower = dateText.toLowerCase();
 
-function replaceSelectedText(newText) {
-  const selection = window.getSelection();
-  if (!selection.rangeCount) return;
-
-  const range = selection.getRangeAt(0);
-  range.deleteContents();
-  range.insertNode(document.createTextNode(newText));
-}
-
-function getEmailBody() {
-  const bodies = document.querySelectorAll("div[role='listitem']");
-  let text = "";
-
-  bodies.forEach(el => {
-    if (el.innerText.length > text.length) {
-      text = el.innerText;
-    }
-  });
-
-  if (!text) {
-    const alt = document.querySelector("div.a3s");
-    if (alt) text = alt.innerText;
+  if (lower.includes("tomorrow")) {
+    today.setDate(today.getDate() + 1);
+    return today.toISOString().split("T")[0];
   }
 
-  console.log("Extracted email body:", text);
-  return text;
-}
-
-// Message Listener
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-
-  // -------- Rewrite --------
-  if (request.type === "REWRITE_EMAIL") {
-    const text = getSelectedText();
-
-    chrome.runtime.sendMessage({
-      type: "REWRITE_BACKEND",
-      text: text,
-      tone: request.tone
-    }, (response) => {
-      if (response?.success) {
-        replaceSelectedText(response.rewritten);
-      } else {
-        alert("AI rewrite failed");
-      }
-    });
+  if (lower.includes("today")) {
+    return today.toISOString().split("T")[0];
   }
 
-  // -------- Classify --------
-  if (request.type === "CLASSIFY_EMAIL") {
-    const text = getEmailBody();
+  if (lower.includes("next week")) {
+    today.setDate(today.getDate() + 7);
+    return today.toISOString().split("T")[0];
+  }
 
-    if (!text || text.trim().length < 20) {
-      alert("Could not read email body. Open the email fully.");
+  // Try parsing explicit date
+  const parsed = new Date(dateText);
+  if (!isNaN(parsed)) {
+    return parsed.toISOString().split("T")[0];
+  }
+
+  return null;
+}
+
+// Listen for classification request
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  if (request.type !== "CLASSIFY_EMAIL") return;
+
+  try {
+    const emailBody =
+      document.querySelector("div[role='listitem'] div[dir='ltr']")?.innerText ||
+      document.querySelector("div[dir='ltr']")?.innerText ||
+      "";
+
+    if (!emailBody) {
+      alert("Could not read email content.");
       return;
     }
 
-    chrome.runtime.sendMessage({
-      type: "CLASSIFY_BACKEND",
-      text: text
-    }, (response) => {
-      if (!response?.success) {
-        alert("Email classification failed");
-        return;
-      }
-
-      // Remove existing badge
-      const oldBadge = document.getElementById("ai-email-category-badge");
-      if (oldBadge) oldBadge.remove();
-
-      // Create badge
-      const badge = document.createElement("div");
-      badge.id = "ai-email-category-badge";
-      badge.innerText = "Category: " + response.category;
-
-      badge.style.padding = "6px 10px";
-      badge.style.margin = "10px 0";
-      badge.style.display = "inline-block";
-      badge.style.background = "#e0f2fe";
-      badge.style.color = "#0369a1";
-      badge.style.borderRadius = "6px";
-      badge.style.fontWeight = "bold";
-      badge.style.fontSize = "13px";
-
-      const container = document.querySelector("div[role='main']");
-      if (container) {
-        container.prepend(badge);
-      }
+    const res = await fetch("http://127.0.0.1:8000/extract-event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: emailBody })
     });
+
+    const data = await res.json();
+
+    const resolvedDate = resolveDate(data.date_text);
+
+    alert(
+      "Extracted Info:\n" +
+      JSON.stringify(
+        {
+          event_type: data.event_type,
+          date: resolvedDate || "unresolved",
+          time: data.time
+        },
+        null,
+        2
+      )
+    );
+
+  } catch (err) {
+    console.error(err);
+    alert("Event extraction failed.");
   }
-
-  // -------- Extract Dates --------
-  if (request.type === "EXTRACT_EMAIL") {
-    const text = getEmailBody();
-
-    chrome.runtime.sendMessage({
-      type: "EXTRACT_BACKEND",
-      text: text
-    }, (response) => {
-      if (response?.success) {
-        alert("Extracted Info:\n" + response.result);
-      } else {
-        alert("Date extraction failed");
-      }
-    });
-  }
-
 });

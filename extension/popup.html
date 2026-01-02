@@ -1,32 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-      width: 220px;
+console.log("POPUP LOADED");
+
+document.querySelectorAll("button").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const tone = btn.dataset.tone;
+
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    });
+
+    if (!tab || !tab.id) {
+      alert("No active tab found.");
+      return;
     }
-    button {
-      width: 100%;
-      margin-bottom: 6px;
-      padding: 8px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <button data-tone="formal">Formal</button>
-  <button data-tone="polite">Polite</button>
-  <button data-tone="confident">Confident</button>
-  <button data-tone="short & crisp">Short & Crisp</button>
-  <button data-tone="informal">Informal</button>
-  <button data-action="extract">Detect Dates</button>
 
-  <hr>
-
-  <button id="classify">Classify Email</button>
-
-  <script src="popup.js"></script>
-</body>
-</html>
+    chrome.tabs.sendMessage(
+      tab.id,
+      { type: "CLASSIFY_EMAIL" },
+      (response) => {
+        if (chrome.runtime.lastError) {
+          console.warn("No content script yet.");
+          alert("Please refresh Gmail and try again.");
+        }
+      }
+    );
+  });
+});
