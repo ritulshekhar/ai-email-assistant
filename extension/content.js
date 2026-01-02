@@ -1,30 +1,39 @@
-function getSelectedText() {
-  const selection = window.getSelection();
-  if (selection && selection.toString().trim()) {
-    return selection.toString();
-  }
+async function rewriteWithAI(text, tone) {
+  const response = await fetch("http://localhost:8000/rewrite", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, tone })
+  });
 
-  const activeEl = document.activeElement;
-  if (activeEl && activeEl.isContentEditable) {
-    return selection.toString();
-  }
-
-  return "";
+  const data = await response.json();
+  return data.rewritten_text;
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+function replaceSelectedText(newText) {
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+  range.insertNode(document.createTextNode(newText));
+}
+
+chrome.runtime.onMessage.addListener(async (request) => {
   if (request.type !== "REWRITE_EMAIL") return;
 
-  const text = getSelectedText();
-
-  console.log("Captured text:", text);
+  const selection = window.getSelection();
+  const text = selection.toString();
 
   if (!text) {
-    alert("No text detected. Select text inside the compose box.");
+    alert("Please select text inside the Gmail compose box.");
     return;
   }
 
-  alert(
-    `Captured successfully\n\nTone: ${request.tone}\n\nText:\n${text}`
-  );
+  try {
+    const rewritten = await rewriteWithAI(text, request.tone);
+    replaceSelectedText(rewritten);
+  } catch (err) {
+    alert("AI rewrite failed. Make sure backend is running.");
+    console.error(err);
+  }
 });
