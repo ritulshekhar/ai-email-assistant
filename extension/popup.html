@@ -1,58 +1,63 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>AI Email Assistant</title>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Email Assistant</title>
 
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        width: 220px;
-        padding: 12px;
-        background-color: #111827;
-        color: #f9fafb;
-      }
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 260px;
+      padding: 12px;
+      background: #111;
+      color: #fff;
+    }
 
-      h3 {
-        margin: 0 0 10px 0;
-        font-size: 16px;
-        text-align: center;
-      }
+    h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+    }
 
-      button {
-        width: 100%;
-        padding: 8px;
-        margin-bottom: 8px;
-        border: none;
-        border-radius: 6px;
-        background-color: #2563eb;
-        color: white;
-        font-size: 13px;
-        cursor: pointer;
-      }
+    button {
+      width: 100%;
+      margin: 6px 0;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      background: #2563eb;
+      color: white;
+    }
 
-      button:hover {
-        background-color: #1d4ed8;
-      }
-    </style>
-  </head>
+    button:hover {
+      background: #1e40af;
+    }
 
-  <body>
-    <h3>Email Tools</h3>
+    hr {
+      margin: 12px 0;
+      border: 0;
+      border-top: 1px solid #333;
+    }
+  </style>
+</head>
 
-    <!-- Rewrite tones -->
-    <button data-tone="formal">Rewrite: Formal</button>
-    <button data-tone="polite">Rewrite: Polite</button>
-    <button data-tone="confident">Rewrite: Confident</button>
-    <button data-tone="short">Rewrite: Short & Crisp</button>
-    <button data-tone="informal">Rewrite: Informal</button>
+<body>
+  <h3>AI Email Assistant</h3>
 
-    <hr style="margin: 10px 0; border-color: #374151;" />
+  <!-- Rewrite buttons -->
+  <button data-action="rewrite" data-tone="formal">Formal</button>
+  <button data-action="rewrite" data-tone="polite">Polite</button>
+  <button data-action="rewrite" data-tone="confident">Confident</button>
+  <button data-action="rewrite" data-tone="short">Short & Crisp</button>
+  <button data-action="rewrite" data-tone="informal">Informal</button>
 
-    <!-- Classification / extraction -->
-    <button id="classify">Classify Email</button>
-    <button id="extract">Extract Event</button>
+  <hr />
 
-    <script src="popup.js"></script>
-  </body>
+  <!-- Event extraction -->
+  <button data-action="extract">Extract Interview / Event</button>
+
+  <script src="popup.js"></script>
+</body>
 </html>
