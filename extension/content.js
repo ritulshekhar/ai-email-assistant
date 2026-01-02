@@ -1,6 +1,7 @@
 console.log("CONTENT SCRIPT LOADED");
 
-// -------- Rewrite helpers --------
+// Helper functions
+
 function getSelectedText() {
   const selection = window.getSelection();
   return selection ? selection.toString() : "";
@@ -15,19 +16,16 @@ function replaceSelectedText(newText) {
   range.insertNode(document.createTextNode(newText));
 }
 
-// -------- Gmail email body extraction (robust) --------
 function getEmailBody() {
-  // Primary Gmail email body
   const bodies = document.querySelectorAll("div[role='listitem']");
-
   let text = "";
+
   bodies.forEach(el => {
     if (el.innerText.length > text.length) {
       text = el.innerText;
     }
   });
 
-  // Fallback for other Gmail layouts
   if (!text) {
     const alt = document.querySelector("div.a3s");
     if (alt) text = alt.innerText;
@@ -37,10 +35,11 @@ function getEmailBody() {
   return text;
 }
 
-// -------- Message handling --------
+// Message Listener
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
-  // Rewrite email
+  // -------- Rewrite --------
   if (request.type === "REWRITE_EMAIL") {
     const text = getSelectedText();
 
@@ -57,47 +56,63 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
   }
 
-  // Classify email
+  // -------- Classify --------
   if (request.type === "CLASSIFY_EMAIL") {
-  const text = getEmailBody();
+    const text = getEmailBody();
 
-  if (!text || text.trim().length < 20) {
-    alert("Could not read email body.");
-    return;
-  }
-
-  chrome.runtime.sendMessage({
-    type: "CLASSIFY_BACKEND",
-    text: text
-  }, (response) => {
-    if (!response?.success) {
-      alert("Email classification failed");
+    if (!text || text.trim().length < 20) {
+      alert("Could not read email body. Open the email fully.");
       return;
     }
 
-    // Remove existing badge if any
-    const oldBadge = document.getElementById("ai-email-category-badge");
-    if (oldBadge) oldBadge.remove();
+    chrome.runtime.sendMessage({
+      type: "CLASSIFY_BACKEND",
+      text: text
+    }, (response) => {
+      if (!response?.success) {
+        alert("Email classification failed");
+        return;
+      }
 
-    // Create badge
-    const badge = document.createElement("div");
-    badge.id = "ai-email-category-badge";
-    badge.innerText = "Category: " + response.category;
+      // Remove existing badge
+      const oldBadge = document.getElementById("ai-email-category-badge");
+      if (oldBadge) oldBadge.remove();
 
-    badge.style.padding = "6px 10px";
-    badge.style.margin = "10px 0";
-    badge.style.display = "inline-block";
-    badge.style.background = "#e0f2fe";
-    badge.style.color = "#0369a1";
-    badge.style.borderRadius = "6px";
-    badge.style.fontWeight = "bold";
-    badge.style.fontSize = "13px";
+      // Create badge
+      const badge = document.createElement("div");
+      badge.id = "ai-email-category-badge";
+      badge.innerText = "Category: " + response.category;
 
-    // Insert badge at top of email
-    const container = document.querySelector("div[role='main']");
-    if (container) {
-      container.prepend(badge);
-    }
-  });
-}
+      badge.style.padding = "6px 10px";
+      badge.style.margin = "10px 0";
+      badge.style.display = "inline-block";
+      badge.style.background = "#e0f2fe";
+      badge.style.color = "#0369a1";
+      badge.style.borderRadius = "6px";
+      badge.style.fontWeight = "bold";
+      badge.style.fontSize = "13px";
 
+      const container = document.querySelector("div[role='main']");
+      if (container) {
+        container.prepend(badge);
+      }
+    });
+  }
+
+  // -------- Extract Dates --------
+  if (request.type === "EXTRACT_EMAIL") {
+    const text = getEmailBody();
+
+    chrome.runtime.sendMessage({
+      type: "EXTRACT_BACKEND",
+      text: text
+    }, (response) => {
+      if (response?.success) {
+        alert("Extracted Info:\n" + response.result);
+      } else {
+        alert("Date extraction failed");
+      }
+    });
+  }
+
+});
