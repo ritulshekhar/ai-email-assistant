@@ -4,7 +4,7 @@ AI Email Assistant is a privacy-first Chrome extension that leverages local LLMs
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Context-Aware Rewriting**: Instantly rewrite selected text in multiple tones (Formal, Polite, Confident, etc.).
 - **Email Classification**: Automatically categorize emails into Job/Interview, Promotions, Personal, and more.
@@ -13,7 +13,7 @@ AI Email Assistant is a privacy-first Chrome extension that leverages local LLMs
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Extension**: Manifest V3, JavaScript (Content Scripts + Service Workers)
 - **Backend**: FastAPI (Python 3.10+)
@@ -22,7 +22,7 @@ AI Email Assistant is a privacy-first Chrome extension that leverages local LLMs
 
 ---
 
-## ⚙️ Setup & Installation
+## Setup and Installation
 
 ### 1. Prerequisites
 - [Ollama](https://ollama.com/) installed and running.
@@ -49,14 +49,14 @@ AI Email Assistant is a privacy-first Chrome extension that leverages local LLMs
 
 ---
 
-## 📖 Usage
+## Usage
 
 1. **Rewriting**: Open a Gmail compose window, select the text you want to change, and click a tone button in the extension popup.
-2. **Extraction/Classification**: Open an existing email and click the respective buttons in the popup to view analyzed data.
+2. **Extraction and Classification**: Open an existing email and click the respective buttons in the popup to view analyzed data.
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 - **Ollama Connection Error**: Ensure the Ollama service is running and accessible at `localhost:11434`.
 - **Extension not responding**: Reload the extension in `chrome://extensions/` and refresh your Gmail tab.
@@ -64,5 +64,5 @@ AI Email Assistant is a privacy-first Chrome extension that leverages local LLMs
 
 ---
 
-## 📜 License
+## License
 MIT License. Free to use and modify.
