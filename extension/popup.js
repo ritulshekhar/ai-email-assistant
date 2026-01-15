@@ -1,17 +1,19 @@
-console.log("POPUP JS LOADED");
+console.log("POPUP LOADED");
 
 document.querySelectorAll("button").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const action = btn.dataset.action;
     const tone = btn.dataset.tone;
-    console.log("Tone selected:", tone);
 
     const [tab] = await chrome.tabs.query({
       active: true,
       currentWindow: true,
     });
 
-    console.log("Sending message to tab:", tab.id);
+    if (!tab || !tab.id) {
+      alert("No active tab found.");
+      return;
+    }
 
     // ===== REWRITE EMAIL =====
     if (action === "rewrite") {
@@ -30,21 +32,24 @@ document.querySelectorAll("button").forEach((btn) => {
       );
     }
 
-    // ===== CLASSIFY EMAIL =====
-    if (action === "classify") {
+    // ===== EXTRACT EVENT =====
+    if (action === "extract") {
       chrome.tabs.sendMessage(
         tab.id,
         {
-          type: "CLASSIFY_EMAIL",
+          type: "EXTRACT_EVENT",
         },
         (response) => {
           if (chrome.runtime.lastError) {
-            alert("Open an email to classify.");
+            alert("Open an email to extract events.");
             return;
           }
 
           if (response && response.data) {
-            alert("Email Category: " + response.data.category);
+            alert(
+              "Extracted Info:\n\n" +
+              JSON.stringify(response.data, null, 2)
+            );
           }
         }
       );
