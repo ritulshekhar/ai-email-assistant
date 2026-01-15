@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Email Assistant</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 260px;
+      padding: 12px;
+      background: #111;
+      color: #fff;
+    }
+
+    h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    button {
+      width: 100%;
+      margin: 6px 0;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      background: #2563eb;
+      color: white;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+
+    hr {
+      margin: 12px 0;
+      border: 0;
+      border-top: 1px solid #333;
+    }
+  </style>
+</head>
+
+<body>
+  <h3>AI Email Assistant</h3>
+
+  <!-- Rewrite buttons -->
+  <button data-action="rewrite" data-tone="formal">Formal</button>
+  <button data-action="rewrite" data-tone="polite">Polite</button>
+  <button data-action="rewrite" data-tone="confident">Confident</button>
+  <button data-action="rewrite" data-tone="short">Short & Crisp</button>
+  <button data-action="rewrite" data-tone="informal">Informal</button>
+
+  <hr />
+
+  <!-- Event extraction -->
+  <button data-action="extract">Extract Interview / Event</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
