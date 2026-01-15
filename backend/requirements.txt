@@ -1,6 +1,6 @@
+ollama
 fastapi
 uvicorn
-ollama
 pydantic
 python-multipart
 requests

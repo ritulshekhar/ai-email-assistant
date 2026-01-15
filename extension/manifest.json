@@ -2,8 +2,14 @@
   "manifest_version": 3,
   "name": "AI Email Assistant",
   "version": "1.0",
-  "permissions": ["activeTab", "scripting"],
-  "host_permissions": ["https://mail.google.com/*"],
+  "description": "Local AI assistant for Gmail productivity",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://mail.google.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -12,14 +18,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://mail.google.com/*"],
-      "js": ["content.js"]
+      "matches": [
+        "https://mail.google.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
     }
-  ],
-
-  "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
-  }
+  ]
 }

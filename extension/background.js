@@ -1,54 +1,35 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  const actions = {
+    REWRITE_EMAIL: {
+      url: "http://127.0.0.1:8000/rewrite",
+      body: { text: request.text, tone: request.tone }
+    },
+    EXTRACT_EVENT: {
+      url: "http://127.0.0.1:8000/extract-event",
+      body: { text: request.text }
+    },
+    CLASSIFY_EMAIL: {
+      url: "http://127.0.0.1:8000/classify",
+      body: { text: request.text }
+    }
+  };
 
-  // -------- Rewrite --------
-  if (request.type === "REWRITE_BACKEND") {
-    fetch("http://127.0.0.1:8000/rewrite", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: request.text,
-        tone: request.tone
-      })
-    })
+  const action = actions[request.type];
+  if (!action) return;
+
+  fetch(action.url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(action.body)
+  })
     .then(res => res.json())
     .then(data => {
-      sendResponse({ success: true, rewritten: data.rewritten_text });
+      sendResponse({ success: true, data: data });
     })
-    .catch(() => sendResponse({ success: false }));
+    .catch(err => {
+      console.error("Fetch failed:", err);
+      sendResponse({ success: false, error: err.message });
+    });
 
-    return true;
-  }
-
-  // -------- Classify --------
-  if (request.type === "CLASSIFY_BACKEND") {
-    fetch("http://127.0.0.1:8000/classify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: request.text })
-    })
-    .then(res => res.json())
-    .then(data => {
-      sendResponse({ success: true, category: data.category });
-    })
-    .catch(() => sendResponse({ success: false }));
-
-    return true;
-  }
-
-  // -------- Extract --------
-  if (request.type === "EXTRACT_BACKEND") {
-    fetch("http://127.0.0.1:8000/extract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: request.text })
-    })
-    .then(res => res.json())
-    .then(data => {
-      sendResponse({ success: true, result: JSON.stringify(data, null, 2) });
-    })
-    .catch(() => sendResponse({ success: false }));
-
-    return true;
-  }
-
+  return true; // Keep channel open for async response
 });

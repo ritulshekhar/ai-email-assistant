@@ -1,107 +1,58 @@
-(function () {
-  console.log("Content script loaded: Smart Inbox Grouping");
+function replaceSelectedText(newText) {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
 
-  // Prevent duplicate execution
-  if (window.__SMART_INBOX_LOADED__) {
-    console.log("Smart Inbox already initialized");
-    return;
-  }
-  window.__SMART_INBOX_LOADED__ = true;
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+  range.insertNode(document.createTextNode(newText));
+}
 
-  // Utility: wait for element
-  function waitForElement(selector, timeout = 10000) {
-    return new Promise((resolve, reject) => {
-      const start = Date.now();
-      const interval = setInterval(() => {
-        const el = document.querySelector(selector);
-        if (el) {
-          clearInterval(interval);
-          resolve(el);
+function getEmailBody() {
+  // Gmail specific selector for the email body in read mode or compose mode
+  const body = document.querySelector('.ii.gt') || document.querySelector('[role="textbox"]');
+  return body ? body.innerText : "";
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "REWRITE_EMAIL") {
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+
+    if (!selectedText) {
+      alert("Please select text inside the Gmail compose box.");
+      return;
+    }
+
+    chrome.runtime.sendMessage(
+      { type: "REWRITE_EMAIL", text: selectedText, tone: request.tone },
+      (response) => {
+        if (response && response.success) {
+          replaceSelectedText(response.data.rewritten_text);
+        } else {
+          alert("AI rewrite failed. Backend not reachable.");
         }
-        if (Date.now() - start > timeout) {
-          clearInterval(interval);
-          reject("Timeout waiting for element");
+      }
+    );
+  }
+
+  if (request.type === "EXTRACT_EVENT" || request.type === "CLASSIFY_EMAIL") {
+    const emailBody = getEmailBody();
+    if (!emailBody) {
+      alert("Could not find email content.");
+      return;
+    }
+
+    chrome.runtime.sendMessage(
+      { type: request.type, text: emailBody },
+      (response) => {
+        if (response && response.success) {
+          sendResponse({ data: response.data });
+        } else {
+          alert("AI action failed.");
+          sendResponse({ success: false });
         }
-      }, 300);
-    });
+      }
+    );
+    return true; // Keep channel open
   }
-
-  // Create badge
-  function createBadge(label) {
-    const badge = document.createElement("span");
-    badge.innerText = label.toUpperCase();
-
-    const colors = {
-      Interview: "#16a34a",
-      Promotion: "#ca8a04",
-      Spam: "#dc2626",
-      Other: "#6b7280",
-    };
-
-    badge.style.background = colors[label] || "#6b7280";
-    badge.style.color = "white";
-    badge.style.padding = "4px 10px";
-    badge.style.borderRadius = "999px";
-    badge.style.fontSize = "12px";
-    badge.style.fontWeight = "600";
-    badge.style.marginRight = "10px";
-
-    badge.setAttribute("data-smart-badge", "true");
-    return badge;
-  }
-
-  function removeExistingBadge() {
-    const old = document.querySelector("[data-smart-badge]");
-    if (old) old.remove();
-  }
-
-  function extractEmailText() {
-    const body = document.querySelector("div[role='listitem'] div[dir='ltr']");
-    if (!body) return null;
-    return body.innerText.trim();
-  }
-
-  async function injectBadge(category) {
-    try {
-      const header = await waitForElement("h2.hP");
-      removeExistingBadge();
-      const badge = createBadge(category);
-      header.prepend(badge);
-    } catch (err) {
-      console.warn("Badge injection failed:", err);
-    }
-  }
-
-  async function classifyEmail(text) {
-    const res = await fetch("http://127.0.0.1:8000/classify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-
-    if (!res.ok) throw new Error("Classification failed");
-    const data = await res.json();
-    return data.category || "Other";
-  }
-
-  async function handleEmailOpen() {
-    try {
-      const text = extractEmailText();
-      if (!text || text.length < 20) return;
-
-      const category = await classifyEmail(text);
-      console.log("Email classified as:", category);
-      await injectBadge(category);
-    } catch (err) {
-      console.error("Smart inbox error:", err);
-    }
-  }
-
-  const observer = new MutationObserver(() => {
-    if (location.hash.includes("#inbox") || location.hash.includes("#all")) {
-      handleEmailOpen();
-    }
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
-})();
+});

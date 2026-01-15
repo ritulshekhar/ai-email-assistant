@@ -1,4 +1,4 @@
-console.log("POPUP LOADED");
+console.log("POPUP JS LOADED");
 
 document.querySelectorAll("button").forEach((btn) => {
   btn.addEventListener("click", async () => {
@@ -19,14 +19,10 @@ document.querySelectorAll("button").forEach((btn) => {
     if (action === "rewrite") {
       chrome.tabs.sendMessage(
         tab.id,
-        {
-          type: "REWRITE_EMAIL",
-          tone: tone,
-        },
+        { type: "REWRITE_EMAIL", tone: tone },
         (response) => {
           if (chrome.runtime.lastError) {
-            alert("Open Gmail and select email text first.");
-            return;
+            alert("Select text in Gmail compose box first.");
           }
         }
       );
@@ -36,20 +32,31 @@ document.querySelectorAll("button").forEach((btn) => {
     if (action === "extract") {
       chrome.tabs.sendMessage(
         tab.id,
-        {
-          type: "EXTRACT_EVENT",
-        },
+        { type: "EXTRACT_EVENT" },
         (response) => {
           if (chrome.runtime.lastError) {
-            alert("Open an email to extract events.");
+            alert("Open an email top extract events.");
             return;
           }
-
           if (response && response.data) {
-            alert(
-              "Extracted Info:\n\n" +
-              JSON.stringify(response.data, null, 2)
-            );
+            alert("Extracted Info:\n\n" + JSON.stringify(response.data, null, 2));
+          }
+        }
+      );
+    }
+
+    // ===== CLASSIFY EMAIL =====
+    if (action === "classify") {
+      chrome.tabs.sendMessage(
+        tab.id,
+        { type: "CLASSIFY_EMAIL" },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            alert("Open an email to classify.");
+            return;
+          }
+          if (response && response.data) {
+            alert("Email Category: " + response.data.category);
           }
         }
       );
